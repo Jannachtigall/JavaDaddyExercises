@@ -4,24 +4,40 @@ import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task1_OrderService
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task1_OrderService.forTest.Order;
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task1_OrderService.forTest.OrderRepository;
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task1_OrderService.forTest.OrderService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
+
+    @Mock
+    private InventoryService inventoryService;
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @InjectMocks
+    private OrderService orderService;
+
+    private Order order;
+
+    @BeforeEach
+    void setUp() {
+        order = new Order("prod123", 2, 50.0);
+    }
+
     @Test
     void testOrderProcessingSuccess() {
-        // Создаем моки зависимостей
-        InventoryService mockInventoryService = mock(InventoryService.class);
-        OrderRepository mockOrderRepository = mock(OrderRepository.class);
-
         // Настраиваем поведение моков
-        when(mockInventoryService.isProductAvailable("prod123", 2)).thenReturn(true);
-
-        OrderService orderService = new OrderService(mockInventoryService, mockOrderRepository);
-        Order order = new Order("prod123", 2, 50.0);
+        when(inventoryService.isProductAvailable("prod123", 2)).thenReturn(true);
 
         // Вызываем метод
         boolean result = orderService.processOrder(order);
@@ -30,25 +46,19 @@ public class OrderServiceTest {
         assertTrue(result);
 
         // Проверяем вызовы зависимостей
-        verify(mockInventoryService, times(1)).isProductAvailable("prod123", 2);
-        verify(mockOrderRepository, times(1)).saveOrder(order);
+        verify(inventoryService, times(1)).isProductAvailable("prod123", 2);
+        verify(orderRepository, times(1)).saveOrder(order);
     }
 
     @Test
     void testOrderProcessingFailure() {
-        InventoryService mockInventoryService = mock(InventoryService.class);
-        OrderRepository mockOrderRepository = mock(OrderRepository.class);
-
-        when(mockInventoryService.isProductAvailable("prod123", 2)).thenReturn(false);
-
-        OrderService orderService = new OrderService(mockInventoryService, mockOrderRepository);
-        Order order = new Order("prod123", 2, 50.0);
+        when(inventoryService.isProductAvailable("prod123", 2)).thenReturn(false);
 
         boolean result = orderService.processOrder(order);
 
         assertFalse(result);
 
-        verify(mockInventoryService, times(1)).isProductAvailable("prod123", 2);
-        verify(mockOrderRepository, never()).saveOrder(order);
+        verify(inventoryService, times(1)).isProductAvailable("prod123", 2);
+        verify(orderRepository, never()).saveOrder(order);
     }
 }

@@ -3,58 +3,67 @@ package mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task3_AccountServ
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task3_AccountService.forTest.Account;
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task3_AccountService.forTest.AccountRepository;
 import mentorship.roadmap.Java_Core.step9_Test.topic2_Mockito.task3_AccountService.forTest.AccountService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class AccountServiceTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @InjectMocks
+    private AccountService accountService;
+
+    private Account account;
+
+    @BeforeEach
+    void setUp() {
+        account = new Account("acc123", 500.0);
+    }
+
     @Test
     void testSuccessfulWithdrawal() {
-        AccountRepository mockAccountRepository = mock(AccountRepository.class);
-        AccountService accountService = new AccountService(mockAccountRepository);
+        when(accountRepository.findAccountById(account.getAccountId())).thenReturn(account);
 
-        Account mockAccount = new Account("acc123", 500.0);
-        when(mockAccountRepository.findAccountById("acc123")).thenReturn(mockAccount);
-
-        boolean result = accountService.withdraw("acc123", 200.0);
+        boolean result = accountService.withdraw(account.getAccountId(), 200.0);
 
         assertTrue(result);
-        assertEquals(300.0, mockAccount.getBalance());
+        assertEquals(300.0, account.getBalance());
 
-        verify(mockAccountRepository, times(1)).findAccountById("acc123");
-        verify(mockAccountRepository, times(1)).updateAccount(mockAccount);
+        verify(accountRepository, times(1)).findAccountById(account.getAccountId());
+        verify(accountRepository, times(1)).updateAccount(account);
     }
 
     @Test
     void testWithdrawalFailure_InsufficientFunds() {
-        AccountRepository mockAccountRepository = mock(AccountRepository.class);
-        AccountService accountService = new AccountService(mockAccountRepository);
+        when(accountRepository.findAccountById(account.getAccountId())).thenReturn(account);
 
-        Account mockAccount = new Account("acc123", 100.0);
-        when(mockAccountRepository.findAccountById("acc123")).thenReturn(mockAccount);
-
-        boolean result = accountService.withdraw("acc123", 200.0);
+        boolean result = accountService.withdraw(account.getAccountId(), 2000.0);
 
         assertFalse(result);
-        assertEquals(100.0, mockAccount.getBalance());
+        assertEquals(500.0, account.getBalance());
 
-        verify(mockAccountRepository, times(1)).findAccountById("acc123");
-        verify(mockAccountRepository, never()).updateAccount(any());
+        verify(accountRepository, times(1)).findAccountById(account.getAccountId());
+        verify(accountRepository, never()).updateAccount(any());
     }
 
     @Test
     void testWithdrawalFailure_AccountNotFound() {
-        AccountRepository mockAccountRepository = mock(AccountRepository.class);
-        AccountService accountService = new AccountService(mockAccountRepository);
-
-        when(mockAccountRepository.findAccountById("unknownAccount")).thenReturn(null);
+        when(accountRepository.findAccountById("unknownAccount")).thenReturn(null);
 
         boolean result = accountService.withdraw("unknownAccount", 100.0);
 
         assertFalse(result);
 
-        verify(mockAccountRepository, times(1)).findAccountById("unknownAccount");
-        verify(mockAccountRepository, never()).updateAccount(any());
+        verify(accountRepository, times(1)).findAccountById("unknownAccount");
+        verify(accountRepository, never()).updateAccount(any());
     }
 }
