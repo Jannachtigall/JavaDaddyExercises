@@ -1,4 +1,4 @@
-package mentorship.roadmap.Java_Core.step6_Collections.topic2_Set.task2_TreeMap.solution;
+package mentorship.roadmap.Java_Core.step6_Collections.topic2_Set.task2_TreeSet.solution;
 
 import java.util.Set;
 import java.util.TreeSet;
